@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas
+      id="myCanvas"
+      width="500"
+      height="500"
+      style="border: 1px solid blue"
+    ></canvas>
+    <script>
+      let canvas = document.getElementById("myCanvas");
+      let ctx = canvas.getContext("2d"); //2d хэмжээст зураг зурах боломжтой болж байна.
+
+      let onoo = 0;
+      ami = 3;
+      let x = 30,
+        y = 40,
+        urgun = 60,
+        undur = 20,
+        saadToo = 25;
+
+      let saad = [];
+      for (let x = 30; x < 450; x += 80) {
+        for (let y = 40; y < 200; y += 40) {
+          saad.push({
+            saadX: x,
+            saadY: y,
+            width: urgun,
+            heigth: undur,
+            active: true,
+          });
+        }
+      }
+      function saadZurah(durs) {
+        if (durs.active) {
+          ctx.beginPath();
+          ctx.rect(durs.saadX, durs.saadY, durs.width, durs.heigth);
+          ctx.fillStyle = "blue";
+          ctx.fill();
+          ctx.closePath();
+        }
+      }
+      function textZurah() {
+        //Оноо зурж байгаа текст
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "blue";
+        ctx.fillText("Оноо: " + onoo, 30, 30);
+        //Амь текст
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "blue";
+        ctx.fillText("Амь: " + ami, 390, 30);
+      }
+
+      function bumbugZurah(x, y) {
+        ctx.beginPath();
+        ctx.arc(x, y, 10, 0, 2 * Math.PI, false);
+        ctx.fillStyle = "green";
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      let bumbugBairlalX = 250,
+        bumbugBairlalY = 440;
+      let chiglelX = 1;
+      chiglelY = -1;
+      function bumbugHudluh() {
+        // if(bumbugBairlalX+chiglelX>500) chiglelX=-chiglelX;
+        // if(bumbugBairlalY+chiglelY<0) chiglelY=-chiglelY;
+        // if(bumbugBairlalX+chiglelX<0) chiglelX=-chiglelX;
+        // if(bumbugBairlalY+chiglelY>470) chiglelY=-chiglelY;
+        if (bumbugBairlalX + chiglelX > 500 || bumbugBairlalX + chiglelX < 0)
+          chiglelX = -chiglelX;
+        if (bumbugBairlalY + chiglelY > 500 || bumbugBairlalY + chiglelY < 0)
+          chiglelY = -chiglelY;
+        //Tsohiuraas oino
+        if (
+          bumbugBairlalX > tsohiurBairlalX &&
+          bumbugBairlalX < tsohiurBairlalX + 100 &&
+          bumbugBairlalY + chiglelY > 440
+        ) {
+          chiglelY = -chiglelY;
+        }
+
+        //Saadand oino
+        for (let s of saad) {
+          if (
+            s.active &&
+            bumbugBairlalX > s.saadX &&
+            bumbugBairlalX < s.width + s.saadX &&
+            bumbugBairlalY > s.saadY &&
+            bumbugBairlalY < s.heigth + s.saadY
+          ) {
+            chiglelY = -chiglelY;
+            s.active = false;
+            onoo += 1;
+          }
+        }
+        //Ami hasah
+        if (bumbugBairlalY + chiglelY > 480) {
+          ami -= 1;
+          (bumbugBairlalX = 250), (bumbugBairlalY = 440);
+          chiglelX = 1;
+          chiglelY = -1;
+        }
+        bumbugBairlalX += chiglelX;
+        bumbugBairlalY += chiglelY;
+        // bumbugZurah(bumbugBairlalX,bumbugBairlalY);
+      }
+
+      function tsohiurZurah(x, y, urgun, undur) {
+        ctx.beginPath();
+        ctx.rect(x, y, urgun, undur);
+        ctx.fillStyle = "blue";
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      let tsohiurBairlalX = 200;
+      function tsohiurHudluh(n) {
+        tsohiurBairlalX += n;
+        if (tsohiurBairlalX > 430) tsohiurBairlalX = 430;
+        if (tsohiurBairlalX < 0) tsohiurBairlalX = 0;
+        clearZurag();
+      }
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key == "ArrowLeft") tsohiurHudluh(-100);
+        if (e.key == "ArrowRight") tsohiurHudluh(100);
+      });
+      function clearZurag() {
+        ctx.clearRect(0, 0, 500, 500);
+        for (let s of saad) {
+          saadZurah(s);
+        }
+        tsohiurZurah(tsohiurBairlalX, 450, 70, 10);
+        textZurah();
+        bumbugZurah(bumbugBairlalX, bumbugBairlalY);
+      }
+      function updateAnime() {
+        bumbugHudluh();
+        clearZurag();
+        requestAnimationFrame(updateAnime); //animation davtalt
+      }
+
+      let level = 1;
+      let ballColor = "green"; // 1r ue
+      let brickColor = "blue"; // 1r ue
+      let gameRunning = true; // false bumbug zogsono
+      let gameState = "running"; // running | levelComplete | gameOver | won
+      let messageText = "";
+
+      // Canvasiin dor ehleh tovch uuseh
+      let startBtn = document.createElement("button");
+      startBtn.id = "startBtn";
+      startBtn.innerText = "Эхлэх";
+      //   startBtn.style.display = "none";
+      startBtn.style.marginTop = "10px";
+      startBtn.style.padding = "8px 16px";
+      document.body.appendChild(startBtn);
+
+      function setLevelColors() {
+        if (level === 1) {
+          ballColor = "green";
+          brickColor = "blue";
+        }
+        if (level === 2) {
+          ballColor = "red";
+          brickColor = "green";
+        }
+        if (level === 3) {
+          ballColor = "blue";
+          brickColor = "pink";
+        }
+      }
+      setLevelColors();
+
+      function resetAllBricks() {
+        for (let s of saad) s.active = true;
+      }
+
+      function resetBall() {
+        bumbugBairlalX = 250;
+        bumbugBairlalY = 440;
+        chiglelX = 1;
+        chiglelY = -1;
+      }
+
+      // Start tovch darahad
+      startBtn.onclick = function () {
+        if (gameState === "gameOver" || gameState === "won") {
+          onoo = 0;
+          ami = 3;
+          level = 1;
+          setLevelColors();
+          resetAllBricks();
+        } else if (gameState === "levelComplete") {
+          level += 1;
+          setLevelColors();
+          resetAllBricks();
+        }
+
+        resetBall();
+        messageText = "";
+        gameState = "running";
+        gameRunning = true;
+        startBtn.style.display = "none";
+      };
+
+      // Toosgonii ungu uyees hamaarah
+      function saadZurah(durs) {
+        if (durs.active) {
+          ctx.beginPath();
+          ctx.rect(durs.saadX, durs.saadY, durs.width, durs.heigth);
+          ctx.fillStyle = brickColor;
+          ctx.fill();
+          ctx.closePath();
+        }
+      }
+
+      // 2) x ue
+      function textZurah() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "blue";
+        ctx.fillText("Оноо: " + onoo, 30, 30);
+
+        ctx.fillText(level + "-р үе", 220, 30);
+
+        ctx.fillText("Амь: " + ami, 390, 30);
+      }
+
+      // 3) bumbug ungu uurchlugduh
+      function bumbugZurah(x, y) {
+        ctx.beginPath();
+        ctx.arc(x, y, 10, 0, 2 * Math.PI, false);
+        ctx.fillStyle = ballColor;
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      // 4) Message (GAME OVER / YOU WON / level duusah)
+      function drawCenterMessage() {
+        if (!messageText) return;
+        ctx.save();
+        ctx.font = "28px Arial";
+        ctx.fillStyle = "black";
+        ctx.textAlign = "center";
+        ctx.fillText(messageText, 250, 260);
+        ctx.restore();
+      }
+
+      function clearZurag() {
+        ctx.clearRect(0, 0, 500, 500);
+        for (let s of saad) {
+          saadZurah(s);
+        }
+        tsohiurZurah(tsohiurBairlalX, 450, 70, 10);
+        textZurah();
+        bumbugZurah(bumbugBairlalX, bumbugBairlalY);
+        drawCenterMessage();
+      }
+
+      // 6) bumbugHudluh: gameRunning=false ued hudluhgui + ue duusah + GAME OVER
+      function bumbugHudluh() {
+        if (!gameRunning) return;
+
+        if (bumbugBairlalX + chiglelX > 500 || bumbugBairlalX + chiglelX < 0)
+          chiglelX = -chiglelX;
+        if (bumbugBairlalY + chiglelY > 500 || bumbugBairlalY + chiglelY < 0)
+          chiglelY = -chiglelY;
+
+        //Tsohiuraas oino
+        if (
+          bumbugBairlalX > tsohiurBairlalX &&
+          bumbugBairlalX < tsohiurBairlalX + 100 &&
+          bumbugBairlalY + chiglelY > 440
+        ) {
+          chiglelY = -chiglelY;
+        }
+
+        //Saadand oih
+        for (let s of saad) {
+          if (
+            s.active &&
+            bumbugBairlalX > s.saadX &&
+            bumbugBairlalX < s.width + s.saadX &&
+            bumbugBairlalY > s.saadY &&
+            bumbugBairlalY < s.heigth + s.saadY
+          ) {
+            chiglelY = -chiglelY;
+            s.active = false;
+            onoo += 1;
+          }
+        }
+
+        // Buh toosgo duussan esehiig shalgah
+        let allCleared = saad.every((s) => !s.active);
+        if (allCleared) {
+          gameRunning = false;
+          startBtn.style.display = "inline-block";
+
+          if (level < 3) {
+            gameState = "levelComplete";
+            messageText = level + "-р үе дууслаа!";
+          } else {
+            gameState = "won";
+            messageText = "YOU WON";
+          }
+          return;
+        }
+
+        //Ami hasah
+        if (bumbugBairlalY + chiglelY > 480) {
+          ami -= 1;
+
+          if (ami <= 0) {
+            gameRunning = false;
+            gameState = "gameOver";
+            messageText = "GAME OVER";
+            startBtn.style.display = "inline-block";
+            return;
+          }
+
+          resetBall();
+          return;
+        }
+
+        bumbugBairlalX += chiglelX;
+        bumbugBairlalY += chiglelY;
+      }
+
+      updateAnime();
+    </script>
+  </body>
+</html>
